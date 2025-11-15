@@ -9,3 +9,6 @@ def normalize(vector: tuple[int, int]):
 
 def add(vec1, vec2):
     return (vec1[0]+vec2[0], vec1[1]+vec2[1])
+
+def distance(vec1: tuple[int, int], vec2: tuple[int, int]):
+    return math.sqrt((vec1[0] - vec2[0])**2 + (vec1[1] - vec2[1])**2)
