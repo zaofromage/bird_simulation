@@ -1,6 +1,6 @@
 import random
 import math
-from utils import normalize, add, norme
+from utils import normalize, add, norme, distance
 
 
 class Bird:
@@ -17,11 +17,12 @@ class Bird:
         # label for the bird
         self.label = label
         
-        self.collide_radius = 50
-        self.vision_radius = 100
+        self.collide_radius = 25
+        self.vision_radius = 50
         self.coeff_align = 0.1
-        self.coeff_sep = 0.1
-        max_speed = 5
+        self.coeff_sep = 0.4
+        self.coeff_coh = 0.1
+        self.max_speed = 5
 
 
     def draw_bird(self, canvas):
@@ -29,13 +30,15 @@ class Bird:
         x1 = self.x + self.size * math.cos(self.angle)
         x2 = self.y + self.size * math.sin(self.angle)
         canvas.create_line(self.x, self.y, x1, x2, fill='black', arrow='last', arrowshape=(12.8,16,4.8), width=2, tags=self.label)
+        
         canvas.create_oval(self.x - self.collide_radius, self.y - self.collide_radius,
                            self.x + self.collide_radius, self.y + self.collide_radius,
                             outline='blue', dash=(2, 4), tags=self.label)
+                            
         canvas.create_oval(self.x - self.vision_radius, self.y - self.vision_radius,
                            self.x + self.vision_radius, self.y + self.vision_radius,
                             outline='green', dash=(2, 4), tags=self.label)
-
+        
     def update_position(self, canvas, screen_size, birds):
         # calculate the vector of separation
         sep_vect = self.detect_sep(birds)
@@ -45,10 +48,20 @@ class Bird:
         # if self.label == "oiseau":
         #    print(sep_vect)
         # calculate next the bird moves to
+        ali_vect = self.detect_ali(birds)
         self.vx += sep_vect[0] * self.coeff_sep
         self.vy += sep_vect[1] * self.coeff_sep
-        self.vx += coh_vect[0] * self.coeff_align
-        self.vy += coh_vect[1] * self.coeff_align
+        self.vx += coh_vect[0] * self.coeff_coh
+        self.vy += coh_vect[1] * self.coeff_coh
+        self.vx += ali_vect[0] * self.coeff_align
+        self.vy += ali_vect[1] * self.coeff_align
+
+        vitesse = norme((self.vx, self.vy))
+        if vitesse > self.max_speed:
+            direction = normalize((self.vx, self.vy))
+            self.vx = direction[0] * self.max_speed
+            self.vy = direction[1] * self.max_speed
+
         self.x += self.vx
         self.y += self.vy
         self.angle = math.atan2(self.vy,self.vx)
@@ -59,6 +72,9 @@ class Bird:
         canvas.delete(self.label)
         self.draw_bird(canvas)
         
+    """
+    Cohesion
+    """
     def detect_coh(self, birds) -> tuple[int, int]:
         moy_x = 0
         moy_y = 0
@@ -79,19 +95,47 @@ class Bird:
         if cpt == 0:
             return (0, 0)
         vec_x = moy_x - self.x
-        vec_y = moy_y - self.y
-        # armoniser
-        
+        vec_y = moy_y - self.y        
         return normalize((vec_x, vec_y))
-    
+
+
+    """
+    Alignment
+    """
+    def detect_ali(self, birds) -> tuple[int, int]:
+        lst_vx = []
+        lst_vy = []
+        
+        for b in birds:
+            if b.x == self.x and b.y == self.y:
+                continue
+            
+            dist = distance((self.x, self.y), (b.x, b.y))
+            
+            # si un oiseau est entre notre zone de vision et notre zone protégée
+            if self.collide_radius < dist < self.vision_radius:
+                lst_vx.append(b.vx)
+                lst_vy.append(b.vy)
+        
+        if not lst_vx:
+            return (0, 0)
+        avg_vx = sum(lst_vx) / len(lst_vx)
+        avg_vy = sum(lst_vy) / len(lst_vy)
+        
+        return normalize((avg_vx, avg_vy))
+        
+    """
+    Separation
+    """
     def detect_sep(self, birds) -> tuple[int, int]:
         final_vect = (0, 0)
         for b in birds:
             if b.x == self.x and b.y == self.y:
                 continue
+
+            # calculer l'hypotenuse
             dist = math.sqrt((self.x - b.x)**2 + (self.y - b.y)**2)
+
             if dist < self.collide_radius and dist > 0:
                 final_vect = add(final_vect, (self.x - b.x, self.y - b.y))
         return normalize(final_vect) if final_vect != (0, 0) else final_vect
-        
-

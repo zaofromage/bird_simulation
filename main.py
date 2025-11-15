@@ -17,9 +17,10 @@ class Loop:
 
 if __name__ == "__main__":
     root=Tk()
+    root.title("Bird Simulation")
     cnv=Canvas(root, width=1000, height=750, bg="ivory")
     cnv.pack()
-    birds = [Bird(f"bird_{i}") for i in range(20)]
+    birds = [Bird(f"bird_{i}") for i in range(50)]
     loop = Loop(root, cnv, (1000, 750), birds)
     root.after(200, loop.loop)
     root.mainloop()
