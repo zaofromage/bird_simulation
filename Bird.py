@@ -9,7 +9,7 @@ class Bird:
         self.x = random.randrange(0, 1000)
         self.y = random.randrange(0, 750)
         # random starting velocity
-        self.vx=random.uniform(-1, 1)
+        self.vx=random.uniform(-1, 5)
         self.vy=random.uniform(-1, 1)
         
         self.size=12
@@ -19,9 +19,9 @@ class Bird:
         
         self.collide_radius = 25
         self.vision_radius = 50
-        self.coeff_align = 0.1
-        self.coeff_sep = 0.4
-        self.coeff_coh = 0.1
+        self.coeff_align = 0.2
+        self.coeff_sep = 0.8
+        self.coeff_coh = 0.2
         self.max_speed = 5
 
 
@@ -83,8 +83,8 @@ class Bird:
         for b in birds:
             if b.x == self.x and b.y == self.y:
                 continue
-            dist = math.sqrt((self.x - b.x)**2 + (self.y - b.y)**2)
-            if dist < self.vision_radius and dist > self.collide_radius:
+            dist = distance((self.x, self.y),(b.x, b.y))
+            if  self.collide_radius < dist < self.vision_radius:
                 cpt += 1
                 moy_x += b.x
                 moy_y += b.y
@@ -133,8 +133,7 @@ class Bird:
             if b.x == self.x and b.y == self.y:
                 continue
 
-            # calculer l'hypotenuse
-            dist = math.sqrt((self.x - b.x)**2 + (self.y - b.y)**2)
+            dist = distance((self.x, self.y), (b.x, b.y))
 
             if dist < self.collide_radius and dist > 0:
                 final_vect = add(final_vect, (self.x - b.x, self.y - b.y))
